@@ -23,8 +23,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.namma_santheledger.data.entity.Customer
@@ -76,7 +79,7 @@ fun HomeScreen(
             modifier = Modifier
                 .padding(paddingValues)
                 .fillMaxSize()
-                .background(Color(0xFFF1F3F4))
+                .background(MaterialTheme.colorScheme.background)
         ) {
             SummarySection(totalOutstanding, dailyCredit, dailyPayment, customers.size)
             
@@ -90,7 +93,7 @@ fun HomeScreen(
                 text = "YOUR CUSTOMERS",
                 modifier = Modifier.padding(start = 20.dp, top = 16.dp, bottom = 8.dp),
                 style = MaterialTheme.typography.labelLarge,
-                color = Color.Gray,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 fontWeight = FontWeight.Bold
             )
 
@@ -141,35 +144,48 @@ fun SummarySection(total: Double, dailyUdari: Double, dailyCash: Double, custome
             modifier = Modifier
                 .background(
                     Brush.verticalGradient(
-                        listOf(MaterialTheme.colorScheme.primary, Color(0xFF283593))
+                        listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.8f))
                     )
                 )
                 .padding(24.dp)
         ) {
             Column {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text("NET BALANCE TO COLLECT", color = Color.White.copy(alpha = 0.7f), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
-                    Surface(color = Color.White.copy(alpha = 0.2f), shape = RoundedCornerShape(8.dp)) {
-                        Text("$customerCount Customers", modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp), color = Color.White, style = MaterialTheme.typography.labelSmall)
-                    }
-                }
+                Text("NET BALANCE TO COLLECT", color = Color.White.copy(alpha = 0.7f), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
                 Text(
                     "₹${"%,.0f".format(total)}",
                     style = MaterialTheme.typography.displayMedium,
                     fontWeight = FontWeight.Black,
                     color = Color.White
                 )
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                // Requirement 3 (Daily Summary) exactly as described
+                Text(
+                    text = buildAnnotatedString {
+                        append("Today you sold for ")
+                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold, color = Color(0xFFFFCCBC))) {
+                            append("₹${"%,.0f".format(dailyUdari + dailyCash)}")
+                        }
+                        append("; Dues pending ")
+                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold, color = Color(0xFFFFCCBC))) {
+                            append("₹${"%,.0f".format(dailyUdari)}")
+                        }
+                    },
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     SummaryMiniCard(
-                        label = "Today's Udari", 
+                        label = "Daily Udari", 
                         value = "₹${"%,.0f".format(dailyUdari)}", 
                         color = Color(0xFFFF8A80),
                         icon = Icons.AutoMirrored.Filled.TrendingUp,
                         modifier = Modifier.weight(1f)
                     )
                     SummaryMiniCard(
-                        label = "Today's Cash", 
+                        label = "Daily Cash",
                         value = "₹${"%,.0f".format(dailyCash)}", 
                         color = Color(0xFFB9F6CA),
                         icon = Icons.AutoMirrored.Filled.TrendingDown,
@@ -207,7 +223,7 @@ fun CustomerItem(customer: Customer, onClick: () -> Unit, onQuickAddClick: () ->
             .padding(horizontal = 16.dp, vertical = 6.dp)
             .clickable { onClick() },
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
@@ -221,17 +237,17 @@ fun CustomerItem(customer: Customer, onClick: () -> Unit, onQuickAddClick: () ->
             }
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(customer.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                Text(customer.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
                 Text(
                     if (customer.totalOutstanding > 0) "Pending Due" else if (customer.totalOutstanding < 0) "Advance Paid" else "All Settled",
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (customer.totalOutstanding > 0) Color(0xFFD32F2F) else if (customer.totalOutstanding < 0) Color(0xFF388E3C) else Color.Gray
+                    color = if (customer.totalOutstanding > 0) Color(0xFFEF5350) else if (customer.totalOutstanding < 0) Color(0xFF66BB6A) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
             }
             Column(horizontalAlignment = Alignment.End) {
                 Text(
                     "₹${"%,.0f".format(Math.abs(customer.totalOutstanding))}",
-                    color = if (customer.totalOutstanding > 0) Color(0xFFD32F2F) else if (customer.totalOutstanding < 0) Color(0xFF388E3C) else Color.Black,
+                    color = if (customer.totalOutstanding > 0) Color(0xFFEF5350) else if (customer.totalOutstanding < 0) Color(0xFF66BB6A) else MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Black,
                     fontSize = 18.sp
                 )
@@ -250,15 +266,15 @@ fun CustomerItem(customer: Customer, onClick: () -> Unit, onQuickAddClick: () ->
 @Composable
 fun EmptyState(title: String, description: String, icon: ImageVector) {
     Column(modifier = Modifier.fillMaxSize().padding(48.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-        Surface(color = Color.White, shape = CircleShape, modifier = Modifier.size(100.dp)) {
+        Surface(color = MaterialTheme.colorScheme.surface, shape = CircleShape, modifier = Modifier.size(100.dp), shadowElevation = 4.dp) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(icon, contentDescription = null, modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
             }
         }
         Spacer(modifier = Modifier.height(24.dp))
-        Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
+        Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onSurface)
         Spacer(modifier = Modifier.height(8.dp))
-        Text(description, textAlign = TextAlign.Center, color = Color.Gray, style = MaterialTheme.typography.bodyMedium)
+        Text(description, textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), style = MaterialTheme.typography.bodyMedium)
     }
 }
 
@@ -271,8 +287,8 @@ fun SearchBar(query: String, onQueryChange: (String) -> Unit, modifier: Modifier
         colors = TextFieldDefaults.colors(
             focusedIndicatorColor = Color.Transparent, 
             unfocusedIndicatorColor = Color.Transparent, 
-            focusedContainerColor = Color.White,
-            unfocusedContainerColor = Color.White
+            focusedContainerColor = MaterialTheme.colorScheme.surface,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface
         ),
         singleLine = true
     )

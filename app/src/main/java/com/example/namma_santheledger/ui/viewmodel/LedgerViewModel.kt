@@ -59,6 +59,12 @@ class LedgerViewModel @Inject constructor(
         }
     }
 
+    fun deleteCustomer(customer: Customer) {
+        viewModelScope.launch {
+            repository.deleteCustomer(customer)
+        }
+    }
+
     fun addTransaction(customerId: Long, amount: Double, type: TransactionType, note: String = "") {
         viewModelScope.launch {
             repository.addTransaction(

@@ -12,11 +12,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -39,6 +39,7 @@ fun CustomerDetailScreen(
     val customer = customers.find { it.id == customerId }
     val transactions by viewModel.getTransactionsForCustomer(customerId).collectAsState(initial = emptyList())
     val context = LocalContext.current
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -47,6 +48,11 @@ fun CustomerDetailScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { showDeleteDialog = true }) {
+                        Icon(Icons.Default.Delete, contentDescription = "Delete Customer", tint = Color.Gray)
                     }
                 }
             )
@@ -59,43 +65,31 @@ fun CustomerDetailScreen(
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.background)
             ) {
-                // Professional Header Card
+                // Header Card
                 Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
                     shape = RoundedCornerShape(24.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                 ) {
                     Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Surface(
-                            modifier = Modifier.size(64.dp),
-                            shape = CircleShape,
-                            color = MaterialTheme.colorScheme.primaryContainer
-                        ) {
+                        Surface(modifier = Modifier.size(64.dp), shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer) {
                             Box(contentAlignment = Alignment.Center) {
                                 Text(customer.name.take(1).uppercase(), style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
                             }
                         }
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text(customer.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                        if (customer.phoneNumber.isNotEmpty()) {
-                            Text(customer.phoneNumber, color = Color.Gray)
-                        }
+                        Text(customer.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                         
                         Spacer(modifier = Modifier.height(24.dp))
-                        
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("Total Balance", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
-                                Text(
-                                    "₹${"%,.2f".format(customer.totalOutstanding)}",
-                                    style = MaterialTheme.typography.displaySmall,
-                                    fontWeight = FontWeight.Black,
-                                    color = if (customer.totalOutstanding > 0) Color(0xFFD32F2F) else Color(0xFF388E3C)
-                                )
-                            }
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("Total Balance", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
+                            Text(
+                                "₹${"%,.2f".format(customer.totalOutstanding)}",
+                                style = MaterialTheme.typography.displaySmall,
+                                fontWeight = FontWeight.Black,
+                                color = if (customer.totalOutstanding > 0) Color(0xFFD32F2F) else Color(0xFF388E3C)
+                            )
                         }
 
                         if (customer.phoneNumber.isNotEmpty() && customer.totalOutstanding > 0) {
@@ -108,14 +102,14 @@ fun CustomerDetailScreen(
                             ) {
                                 Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null)
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("WhatsApp Reminder", fontWeight = FontWeight.Bold)
+                                Text("Send WhatsApp Reminder", fontWeight = FontWeight.Bold)
                             }
                         }
                     }
                 }
 
                 Text(
-                    "RECENT TRANSACTIONS",
+                    "TRANSACTION HISTORY",
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary,
@@ -127,10 +121,7 @@ fun CustomerDetailScreen(
                         Text("No transactions yet.", color = Color.Gray)
                     }
                 } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(bottom = 16.dp)
-                    ) {
+                    LazyColumn(modifier = Modifier.fillMaxSize()) {
                         items(transactions) { transaction ->
                             TransactionItem(transaction)
                         }
@@ -138,6 +129,27 @@ fun CustomerDetailScreen(
                 }
             }
         }
+    }
+
+    if (showDeleteDialog && customer != null) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Delete Customer?") },
+            text = { Text("This will permanently remove ${customer.name} and all their history from your ledger.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.deleteCustomer(customer)
+                        showDeleteDialog = false
+                        onBack()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) { Text("Delete") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) { Text("Cancel") }
+            }
+        )
     }
 }
 
@@ -149,18 +161,19 @@ fun TransactionItem(transaction: LedgerTransaction) {
     Card(
         modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         ListItem(
             headlineContent = { 
                 Text(
-                    if (transaction.type == TransactionType.CREDIT) "Gave Udari" else "Received Payment",
-                    fontWeight = FontWeight.Bold
+                    if (transaction.type == TransactionType.CREDIT) "Gave Goods" else "Received Payment",
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
                 ) 
             },
             supportingContent = { 
                 Column {
-                    if (transaction.note.isNotEmpty()) Text(transaction.note, style = MaterialTheme.typography.bodyMedium)
+                    if (transaction.note.isNotEmpty()) Text(transaction.note, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
                     Text(dateString, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                 }
             },

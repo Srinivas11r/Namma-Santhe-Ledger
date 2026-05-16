@@ -46,22 +46,22 @@ fun ReportsScreen(viewModel: LedgerViewModel) {
             modifier = Modifier
                 .padding(paddingValues)
                 .fillMaxSize()
-                .background(Color(0xFFF1F3F4))
+                .background(MaterialTheme.colorScheme.background)
         ) {
-            // Summary Card
+            // Requirement 2: Understand "Daily Profit"
             Card(
                 modifier = Modifier.padding(16.dp).fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Row(modifier = Modifier.padding(24.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Column {
-                        Text("TOTAL SALES", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
-                        Text("₹${"%,.0f".format(dailyUdari + dailyCash)}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
+                        Text("DAILY EARNINGS (PROFIT)", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                        Text("₹${"%,.0f".format(dailyUdari + dailyCash)}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.onSurface)
                     }
                     VerticalDivider(modifier = Modifier.height(40.dp))
                     Column(horizontalAlignment = Alignment.End) {
-                        Text("TODAY'S CASH", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                        Text("CASH COLLECTED", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
                         Text("₹${"%,.0f".format(dailyCash)}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black, color = Color(0xFF388E3C))
                     }
                 }
@@ -72,7 +72,7 @@ fun ReportsScreen(viewModel: LedgerViewModel) {
                 modifier = Modifier.padding(start = 20.dp, bottom = 8.dp),
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
-                color = Color.Gray
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
 
             if (transactions.isEmpty()) {
@@ -99,11 +99,11 @@ fun DailyTransactionItem(transaction: LedgerTransaction, customerName: String) {
     Card(
         modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         ListItem(
-            headlineContent = { Text(customerName, fontWeight = FontWeight.Bold) },
-            supportingContent = { Text(timeString, style = MaterialTheme.typography.bodySmall) },
+            headlineContent = { Text(customerName, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface) },
+            supportingContent = { Text(timeString, style = MaterialTheme.typography.bodySmall, color = Color.Gray) },
             trailingContent = {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
@@ -119,7 +119,8 @@ fun DailyTransactionItem(transaction: LedgerTransaction, customerName: String) {
                         tint = if (transaction.type == TransactionType.CREDIT) Color(0xFFD32F2F) else Color(0xFF388E3C)
                     )
                 }
-            }
+            },
+            colors = ListItemDefaults.colors(containerColor = Color.Transparent)
         )
     }
 }
