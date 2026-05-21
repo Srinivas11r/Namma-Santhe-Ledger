@@ -1,5 +1,7 @@
 package com.example.namma_santheledger.ui.screens
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -81,35 +83,27 @@ fun CustomerDetailScreen(
                         
                         Spacer(modifier = Modifier.height(24.dp))
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("Current Balance", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
+                            Text("Total Balance", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
                             Text(
                                 "₹${"%,.2f".format(customer.totalOutstanding)}",
                                 style = MaterialTheme.typography.displaySmall,
                                 fontWeight = FontWeight.Black,
-                                color = if (customer.totalOutstanding > 0) Color(0xFFD32F2F) else if (customer.totalOutstanding < 0) Color(0xFF388E3C) else MaterialTheme.colorScheme.onSurface
+                                color = if (customer.totalOutstanding > 0) Color(0xFFD32F2F) else Color(0xFF388E3C)
                             )
                         }
 
-                        if (customer.phoneNumber.isNotEmpty()) {
+                        if (customer.phoneNumber.isNotEmpty() && customer.totalOutstanding > 0) {
                             Spacer(modifier = Modifier.height(24.dp))
                             Button(
                                 onClick = { sendWhatsAppReminder(context, customer.name, customer.phoneNumber, customer.totalOutstanding) },
                                 modifier = Modifier.fillMaxWidth().height(56.dp),
                                 shape = RoundedCornerShape(16.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (customer.totalOutstanding > 0) Color(0xFF25D366) else MaterialTheme.colorScheme.secondary
-                                )
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF25D366))
                             ) {
                                 Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null)
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    if (customer.totalOutstanding > 0) "Send Due Reminder" else "Send Message", 
-                                    fontWeight = FontWeight.Bold
-                                )
+                                Text("Send WhatsApp Reminder", fontWeight = FontWeight.Bold)
                             }
-                        } else {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text("Add a phone number to send reminders", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                         }
                     }
                 }

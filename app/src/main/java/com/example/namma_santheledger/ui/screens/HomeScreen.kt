@@ -15,6 +15,7 @@ import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -84,7 +85,7 @@ fun HomeScreen(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            SummarySection(totalOutstanding, dailyCredit, dailyPayment)
+            SummarySection(totalOutstanding, dailyCredit, dailyPayment, customers.size)
             
             SearchBar(
                 query = searchQuery,
@@ -138,7 +139,7 @@ fun HomeScreen(
 }
 
 @Composable
-fun SummarySection(total: Double, dailyUdari: Double, dailyCash: Double) {
+fun SummarySection(total: Double, dailyUdari: Double, dailyCash: Double, customerCount: Int) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -165,6 +166,7 @@ fun SummarySection(total: Double, dailyUdari: Double, dailyCash: Double) {
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 
+                // Requirement 3 (Daily Summary) exactly as described
                 Text(
                     text = buildAnnotatedString {
                         append("Today you sold for ")
@@ -190,7 +192,7 @@ fun SummarySection(total: Double, dailyUdari: Double, dailyCash: Double) {
                         modifier = Modifier.weight(1f)
                     )
                     SummaryMiniCard(
-                        label = "Daily Cash", 
+                        label = "Daily Cash",
                         value = "₹${"%,.0f".format(dailyCash)}", 
                         color = Color(0xFFB9F6CA),
                         icon = Icons.AutoMirrored.Filled.TrendingDown,
@@ -271,7 +273,7 @@ fun CustomerItem(customer: Customer, onClick: () -> Unit, onQuickAddClick: () ->
                         modifier = Modifier.size(32.dp),
                         colors = IconButtonDefaults.iconButtonColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = "Quick Add", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.Add, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
                     }
                 }
             }
