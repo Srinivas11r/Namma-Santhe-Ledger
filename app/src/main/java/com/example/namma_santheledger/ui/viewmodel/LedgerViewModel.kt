@@ -47,6 +47,9 @@ class LedgerViewModel @Inject constructor(
     val todayTransactions = _startOfDay.flatMapLatest { repository.getAllTransactionsAfter(it) }
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
+    val allTransactions = repository.getAllTransactions()
+        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
     fun onSearchQueryChange(query: String) {
         _searchQuery.value = query
     }

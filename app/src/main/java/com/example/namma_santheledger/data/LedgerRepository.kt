@@ -25,6 +25,8 @@ class LedgerRepository @Inject constructor(
 
     fun getAllTransactionsAfter(startTime: Long) = ledgerDao.getAllTransactionsAfter(startTime)
 
+    fun getAllTransactions() = ledgerDao.getAllTransactions()
+
     suspend fun addTransaction(transaction: LedgerTransaction) = ledgerDao.addTransactionAndUpdateCustomer(transaction)
 
     fun getDailyCredit(startOfDay: Long) = ledgerDao.getDailyCredit(startOfDay)

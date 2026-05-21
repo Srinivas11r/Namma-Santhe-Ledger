@@ -32,6 +32,9 @@ interface LedgerDao {
     @Query("SELECT * FROM transactions WHERE timestamp >= :startTime ORDER BY timestamp DESC")
     fun getAllTransactionsAfter(startTime: Long): Flow<List<LedgerTransaction>>
 
+    @Query("SELECT * FROM transactions ORDER BY timestamp DESC")
+    fun getAllTransactions(): Flow<List<LedgerTransaction>>
+
     @Insert
     suspend fun insertTransaction(transaction: LedgerTransaction): Long
 

@@ -6,9 +6,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Assignment
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Today
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,15 +27,18 @@ import java.util.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReportsScreen(viewModel: LedgerViewModel) {
-    val transactions by viewModel.todayTransactions.collectAsState()
+    val todayTransactions by viewModel.todayTransactions.collectAsState()
+    val allTransactions by viewModel.allTransactions.collectAsState()
     val dailyUdari by viewModel.dailyCredit.collectAsState()
     val dailyCash by viewModel.dailyPayment.collectAsState()
     val customers by viewModel.customers.collectAsState()
 
+    var selectedTab by remember { mutableIntStateOf(0) }
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Daily Market Report", fontWeight = FontWeight.Black) },
+                title = { Text("Business Reports", fontWeight = FontWeight.Black) },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = Color.White
@@ -48,40 +52,64 @@ fun ReportsScreen(viewModel: LedgerViewModel) {
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            // Requirement 2: Understand "Daily Profit"
+            // Earnings Summary
             Card(
                 modifier = Modifier.padding(16.dp).fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
                 Row(modifier = Modifier.padding(24.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Column {
-                        Text("DAILY EARNINGS (PROFIT)", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                        Text("TODAY'S PROFIT", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
                         Text("₹${"%,.0f".format(dailyUdari + dailyCash)}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.onSurface)
                     }
                     VerticalDivider(modifier = Modifier.height(40.dp))
                     Column(horizontalAlignment = Alignment.End) {
-                        Text("CASH COLLECTED", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                        Text("CASH RECEIVED", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
                         Text("₹${"%,.0f".format(dailyCash)}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black, color = Color(0xFF388E3C))
                     }
                 }
             }
 
-            Text(
-                "TODAY'S ACTIVITY LOG",
-                modifier = Modifier.padding(start = 20.dp, bottom = 8.dp),
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-            )
+            // Professional Tab Switcher
+            TabRow(
+                selectedTabIndex = selectedTab,
+                containerColor = Color.Transparent,
+                contentColor = MaterialTheme.colorScheme.primary,
+                divider = {}
+            ) {
+                Tab(
+                    selected = selectedTab == 0,
+                    onClick = { selectedTab = 0 },
+                    text = { Text("Today", fontWeight = FontWeight.Bold) },
+                    icon = { Icon(Icons.Default.Today, contentDescription = null) }
+                )
+                Tab(
+                    selected = selectedTab == 1,
+                    onClick = { selectedTab = 1 },
+                    text = { Text("All Time", fontWeight = FontWeight.Bold) },
+                    icon = { Icon(Icons.Default.History, contentDescription = null) }
+                )
+            }
 
-            if (transactions.isEmpty()) {
+            Spacer(modifier = Modifier.height(8.dp))
+
+            val currentList = if (selectedTab == 0) todayTransactions else allTransactions
+
+            if (currentList.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No activity recorded today.", color = Color.Gray)
+                    Text(
+                        if (selectedTab == 0) "No transactions recorded today." else "No transactions found in history.",
+                        color = Color.Gray
+                    )
                 }
             } else {
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    items(transactions) { transaction ->
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(bottom = 16.dp)
+                ) {
+                    items(currentList) { transaction ->
                         val customerName = customers.find { it.id == transaction.customerId }?.name ?: "Unknown"
                         DailyTransactionItem(transaction, customerName)
                     }
@@ -93,7 +121,7 @@ fun ReportsScreen(viewModel: LedgerViewModel) {
 
 @Composable
 fun DailyTransactionItem(transaction: LedgerTransaction, customerName: String) {
-    val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault())
+    val sdf = SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault())
     val timeString = sdf.format(Date(transaction.timestamp))
 
     Card(
