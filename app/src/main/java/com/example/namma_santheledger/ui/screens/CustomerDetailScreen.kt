@@ -1,8 +1,5 @@
 package com.example.namma_santheledger.ui.screens
 
-import android.content.Context
-import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -24,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.namma_santheledger.data.entity.LedgerTransaction
 import com.example.namma_santheledger.data.entity.TransactionType
+import com.example.namma_santheledger.ui.util.sendWhatsAppReminder
 import com.example.namma_santheledger.ui.viewmodel.LedgerViewModel
 import java.text.SimpleDateFormat
 import java.util.*
@@ -83,27 +81,35 @@ fun CustomerDetailScreen(
                         
                         Spacer(modifier = Modifier.height(24.dp))
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("Total Balance", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
+                            Text("Current Balance", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
                             Text(
                                 "₹${"%,.2f".format(customer.totalOutstanding)}",
                                 style = MaterialTheme.typography.displaySmall,
                                 fontWeight = FontWeight.Black,
-                                color = if (customer.totalOutstanding > 0) Color(0xFFD32F2F) else Color(0xFF388E3C)
+                                color = if (customer.totalOutstanding > 0) Color(0xFFD32F2F) else if (customer.totalOutstanding < 0) Color(0xFF388E3C) else MaterialTheme.colorScheme.onSurface
                             )
                         }
 
-                        if (customer.phoneNumber.isNotEmpty() && customer.totalOutstanding > 0) {
+                        if (customer.phoneNumber.isNotEmpty()) {
                             Spacer(modifier = Modifier.height(24.dp))
                             Button(
-                                onClick = { sendWhatsAppReminder(context, customer.phoneNumber, customer.totalOutstanding) },
+                                onClick = { sendWhatsAppReminder(context, customer.name, customer.phoneNumber, customer.totalOutstanding) },
                                 modifier = Modifier.fillMaxWidth().height(56.dp),
                                 shape = RoundedCornerShape(16.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF25D366))
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (customer.totalOutstanding > 0) Color(0xFF25D366) else MaterialTheme.colorScheme.secondary
+                                )
                             ) {
                                 Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null)
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Send WhatsApp Reminder", fontWeight = FontWeight.Bold)
+                                Text(
+                                    if (customer.totalOutstanding > 0) "Send Due Reminder" else "Send Message", 
+                                    fontWeight = FontWeight.Bold
+                                )
                             }
+                        } else {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text("Add a phone number to send reminders", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                         }
                     }
                 }
@@ -188,12 +194,4 @@ fun TransactionItem(transaction: LedgerTransaction) {
             colors = ListItemDefaults.colors(containerColor = Color.Transparent)
         )
     }
-}
-
-fun sendWhatsAppReminder(context: Context, phoneNumber: String, amount: Double) {
-    val message = "Hello, this is a reminder from Namma-Santhe Ledger. Your pending due is ₹${"%,.2f".format(amount)}. Please clear it soon. Thank you!"
-    val url = "https://api.whatsapp.com/send?phone=$phoneNumber&text=${Uri.encode(message)}"
-    val intent = Intent(Intent.ACTION_VIEW)
-    intent.data = Uri.parse(url)
-    context.startActivity(intent)
 }

@@ -34,4 +34,8 @@ class LedgerRepository @Inject constructor(
     fun getDailyPayment(startOfDay: Long) = ledgerDao.getDailyPayment(startOfDay)
 
     fun getTotalOutstanding() = ledgerDao.getTotalOutstanding()
+
+    fun getCustomerCount() = ledgerDao.getCustomerCount()
+
+    fun getTransactionCount() = ledgerDao.getTransactionCount()
 }

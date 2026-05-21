@@ -9,12 +9,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,6 +23,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -31,6 +32,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.namma_santheledger.data.entity.Customer
+import com.example.namma_santheledger.ui.util.sendWhatsAppReminder
 import com.example.namma_santheledger.ui.viewmodel.LedgerViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -45,6 +47,7 @@ fun HomeScreen(
     val dailyCredit by viewModel.dailyCredit.collectAsState()
     val dailyPayment by viewModel.dailyPayment.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
+    val context = LocalContext.current
 
     var showAddCustomerDialog by remember { mutableStateOf(false) }
 
@@ -81,7 +84,7 @@ fun HomeScreen(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            SummarySection(totalOutstanding, dailyCredit, dailyPayment, customers.size)
+            SummarySection(totalOutstanding, dailyCredit, dailyPayment)
             
             SearchBar(
                 query = searchQuery,
@@ -112,7 +115,10 @@ fun HomeScreen(
                         CustomerItem(
                             customer = customer,
                             onClick = { onCustomerClick(customer.id) },
-                            onQuickAddClick = { onAddTransactionClick(customer.id) }
+                            onQuickAddClick = { onAddTransactionClick(customer.id) },
+                            onRemindClick = { 
+                                sendWhatsAppReminder(context, customer.name, customer.phoneNumber, customer.totalOutstanding) 
+                            }
                         )
                     }
                 }
@@ -132,7 +138,7 @@ fun HomeScreen(
 }
 
 @Composable
-fun SummarySection(total: Double, dailyUdari: Double, dailyCash: Double, customerCount: Int) {
+fun SummarySection(total: Double, dailyUdari: Double, dailyCash: Double) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -159,7 +165,6 @@ fun SummarySection(total: Double, dailyUdari: Double, dailyCash: Double, custome
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 
-                // Requirement 3 (Daily Summary) exactly as described
                 Text(
                     text = buildAnnotatedString {
                         append("Today you sold for ")
@@ -185,7 +190,7 @@ fun SummarySection(total: Double, dailyUdari: Double, dailyCash: Double, custome
                         modifier = Modifier.weight(1f)
                     )
                     SummaryMiniCard(
-                        label = "Daily Cash",
+                        label = "Daily Cash", 
                         value = "₹${"%,.0f".format(dailyCash)}", 
                         color = Color(0xFFB9F6CA),
                         icon = Icons.AutoMirrored.Filled.TrendingDown,
@@ -216,7 +221,7 @@ fun SummaryMiniCard(label: String, value: String, color: Color, icon: ImageVecto
 }
 
 @Composable
-fun CustomerItem(customer: Customer, onClick: () -> Unit, onQuickAddClick: () -> Unit) {
+fun CustomerItem(customer: Customer, onClick: () -> Unit, onQuickAddClick: () -> Unit, onRemindClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -251,12 +256,23 @@ fun CustomerItem(customer: Customer, onClick: () -> Unit, onQuickAddClick: () ->
                     fontWeight = FontWeight.Black,
                     fontSize = 18.sp
                 )
-                IconButton(
-                    onClick = onQuickAddClick, 
-                    modifier = Modifier.size(32.dp).padding(top = 4.dp),
-                    colors = IconButtonDefaults.iconButtonColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+                Row(modifier = Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (customer.phoneNumber.isNotEmpty() && customer.totalOutstanding > 0) {
+                        IconButton(
+                            onClick = onRemindClick, 
+                            modifier = Modifier.size(32.dp),
+                            colors = IconButtonDefaults.iconButtonColors(containerColor = Color(0xFF25D366).copy(alpha = 0.1f))
+                        ) {
+                            Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Remind", tint = Color(0xFF25D366), modifier = Modifier.size(16.dp))
+                        }
+                    }
+                    IconButton(
+                        onClick = onQuickAddClick, 
+                        modifier = Modifier.size(32.dp),
+                        colors = IconButtonDefaults.iconButtonColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = "Quick Add", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+                    }
                 }
             }
         }

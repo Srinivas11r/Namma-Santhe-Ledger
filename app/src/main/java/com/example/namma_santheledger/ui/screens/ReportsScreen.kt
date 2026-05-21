@@ -4,12 +4,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Today
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,6 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.namma_santheledger.data.entity.Customer
 import com.example.namma_santheledger.data.entity.LedgerTransaction
 import com.example.namma_santheledger.data.entity.TransactionType
 import com.example.namma_santheledger.ui.viewmodel.LedgerViewModel
@@ -72,7 +75,7 @@ fun ReportsScreen(viewModel: LedgerViewModel) {
                 }
             }
 
-            // Professional Tab Switcher
+            // Tab Switcher with 3 options
             TabRow(
                 selectedTabIndex = selectedTab,
                 containerColor = Color.Transparent,
@@ -88,32 +91,54 @@ fun ReportsScreen(viewModel: LedgerViewModel) {
                 Tab(
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1 },
-                    text = { Text("All Time", fontWeight = FontWeight.Bold) },
+                    text = { Text("History", fontWeight = FontWeight.Bold) },
                     icon = { Icon(Icons.Default.History, contentDescription = null) }
+                )
+                Tab(
+                    selected = selectedTab == 2,
+                    onClick = { selectedTab = 2 },
+                    text = { Text("Users", fontWeight = FontWeight.Bold) },
+                    icon = { Icon(Icons.Default.People, contentDescription = null) }
                 )
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            val currentList = if (selectedTab == 0) todayTransactions else allTransactions
+            when (selectedTab) {
+                0 -> TransactionList(todayTransactions, customers, "No activity today.")
+                1 -> TransactionList(allTransactions, customers, "No history found.")
+                2 -> CustomerLifetimeList(customers)
+            }
+        }
+    }
+}
 
-            if (currentList.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        if (selectedTab == 0) "No transactions recorded today." else "No transactions found in history.",
-                        color = Color.Gray
-                    )
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(bottom = 16.dp)
-                ) {
-                    items(currentList) { transaction ->
-                        val customerName = customers.find { it.id == transaction.customerId }?.name ?: "Unknown"
-                        DailyTransactionItem(transaction, customerName)
-                    }
-                }
+@Composable
+fun TransactionList(transactions: List<LedgerTransaction>, customers: List<Customer>, emptyMsg: String) {
+    if (transactions.isEmpty()) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text(emptyMsg, color = Color.Gray)
+        }
+    } else {
+        LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 16.dp)) {
+            items(transactions) { transaction ->
+                val customerName = customers.find { it.id == transaction.customerId }?.name ?: "Unknown"
+                DailyTransactionItem(transaction, customerName)
+            }
+        }
+    }
+}
+
+@Composable
+fun CustomerLifetimeList(customers: List<Customer>) {
+    if (customers.isEmpty()) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("No customers registered.", color = Color.Gray)
+        }
+    } else {
+        LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 16.dp)) {
+            items(customers) { customer ->
+                LifetimeCustomerItem(customer)
             }
         }
     }
@@ -150,5 +175,46 @@ fun DailyTransactionItem(transaction: LedgerTransaction, customerName: String) {
             },
             colors = ListItemDefaults.colors(containerColor = Color.Transparent)
         )
+    }
+}
+
+@Composable
+fun LifetimeCustomerItem(customer: Customer) {
+    Card(
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(modifier = Modifier.size(40.dp), shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(customer.name.take(1).uppercase(), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                }
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(customer.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+                Text(
+                    if (customer.phoneNumber.isNotEmpty()) customer.phoneNumber else "No phone",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray
+                )
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    "₹${"%,.0f".format(Math.abs(customer.totalOutstanding))}",
+                    color = if (customer.totalOutstanding > 0) Color(0xFFD32F2F) else if (customer.totalOutstanding < 0) Color(0xFF388E3C) else Color.Gray,
+                    fontWeight = FontWeight.Black
+                )
+                Text(
+                    if (customer.totalOutstanding > 0) "OWES" else if (customer.totalOutstanding < 0) "ADVANCE" else "SETTLED",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (customer.totalOutstanding > 0) Color(0xFFD32F2F) else if (customer.totalOutstanding < 0) Color(0xFF388E3C) else Color.Gray
+                )
+            }
+        }
     }
 }

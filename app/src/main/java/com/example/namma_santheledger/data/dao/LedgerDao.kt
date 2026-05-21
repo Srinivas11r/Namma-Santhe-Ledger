@@ -47,6 +47,12 @@ interface LedgerDao {
     @Query("SELECT SUM(totalOutstanding) FROM customers")
     fun getTotalOutstanding(): Flow<Double?>
 
+    @Query("SELECT COUNT(*) FROM customers")
+    fun getCustomerCount(): Flow<Int>
+
+    @Query("SELECT COUNT(*) FROM transactions")
+    fun getTransactionCount(): Flow<Int>
+
     @Transaction
     suspend fun addTransactionAndUpdateCustomer(transaction: LedgerTransaction) {
         insertTransaction(transaction)

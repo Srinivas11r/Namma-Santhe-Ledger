@@ -50,6 +50,12 @@ class LedgerViewModel @Inject constructor(
     val allTransactions = repository.getAllTransactions()
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
+    val customerCount = repository.getCustomerCount()
+        .stateIn(viewModelScope, SharingStarted.Lazily, 0)
+
+    val transactionCount = repository.getTransactionCount()
+        .stateIn(viewModelScope, SharingStarted.Lazily, 0)
+
     fun onSearchQueryChange(query: String) {
         _searchQuery.value = query
     }
